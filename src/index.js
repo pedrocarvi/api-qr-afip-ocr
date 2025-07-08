@@ -148,6 +148,55 @@ app.post('/extract-image', upload.single('image'), async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /extract-pdf-file:
+ *   post:
+ *     tags:
+ *       - AFIP QR
+ *     summary: Extrae datos de QR de un PDF enviado como archivo
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pdf:
+ *                 type: string
+ *                 format: binary
+ *                 description: PDF que contiene el código QR
+ *     responses:
+ *       200:
+ *         description: Datos extraídos correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Falta el archivo `pdf`
+ *       500:
+ *         description: Error interno
+ */
+app.post('/extract-pdf-file', upload.single('pdf'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ httpCode: 400, error: 'Falta el archivo `pdf`' });
+  }
+  try {
+    const base64PDF = req.file.buffer.toString('base64');
+    const data = await extractQRFromPDFencoded(base64PDF);
+    return res.status(200).json({ httpCode: 200, success: true, data });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ httpCode: 500, success: false, error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en puerto ${PORT}`);
 });
